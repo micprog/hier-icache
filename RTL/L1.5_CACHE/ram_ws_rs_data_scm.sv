@@ -31,104 +31,123 @@ module ram_ws_rs_data_scm
 
 `ifdef USE_DATA_SRAM
 
-    logic cs_n;
-    logic we_n;
+    tc_sram #(
+        .NumWords   (2**addr_width),
+        .DataWidth  (data_width),
+        .ByteWidth  (8),
+        .NumPorts   (1),
+        .Latency    (1),
+        .SimInit    ("zeros"),
+        .PrintSimCfg(0)
+    ) sram_data (
+        .clk_i  (clk),
+        .rst_ni (rst_n),
+        .req_i  (req),
+        .we_i   (write),
+        .addr_i (addr),
+        .wdata_i(wdata),
+        .be_i   (be),
+        .rdata_o(rdata)
+    );
 
-    assign  cs_n = ~req;
-    assign  we_n = ~write;
+    // logic cs_n;
+    // logic we_n;
 
-    generate
-      if(data_width==128)
-      begin : SRAM_CUT
+    // assign  cs_n = ~req;
+    // assign  we_n = ~write;
 
-        case (addr_width)
-            5: begin
-                logic [4-1:0]   n_aw;
-                logic [1-1:0]   n_ac;
-                logic [127:0]   bw;
-                assign {n_aw, n_ac} = addr;
-                assign bw = (we_n) ?  '0 : '1;
+    // generate
+    //   if(data_width==128)
+    //   begin : SRAM_CUT
 
-                // GF22
-                SPREG_32w_128b sram_data
-                (
+    //     case (addr_width)
+    //         5: begin
+    //             logic [4-1:0]   n_aw;
+    //             logic [1-1:0]   n_ac;
+    //             logic [127:0]   bw;
+    //             assign {n_aw, n_ac} = addr;
+    //             assign bw = (we_n) ?  '0 : '1;
 
-                    .CLK      ( clk   ), // input
-                    .CEN      ( cs_n  ), // input
-                    .RDWEN    ( we_n  ), // input
-                    .AW       ( n_aw  ), // input [3:0]
-                    .AC       ( n_ac  ), // input
-                    .D        ( wdata ), // input [127:0]
-                    .BW       ( '1    ), // input [127:0]
-                    .T_LOGIC  ( 1'b0  ), // input
-                    .MA_SAWL  ( '0    ), // input
-                    .MA_WL    ( '0    ), // input
-                    .MA_WRAS  ( '0    ), // input
-                    .MA_WRASD ( '0    ), // input
-                    .Q        ( rdata ), // output [127:0]
-                    .OBSV_CTL (       )  // output
-                );
+    //             // GF22
+    //             SPREG_32w_128b sram_data
+    //             (
 
-                // TSMC55
-                // SRAM_SP_32w_128b sram_data
-                // (
-                //     .CS_N    ( cs_n  ),
-                //     .CLK     ( clk   ),
-                //     .WR_N    ( we_n  ),
-                //     .RW_ADDR ( addr  ),
-                //     .RST_N   ( rst_n ),
-                //     .DATA_IN ( wdata ),
-                //     .DATA_OUT( rdata )
-                // );
-            end
+    //                 .CLK      ( clk   ), // input
+    //                 .CEN      ( cs_n  ), // input
+    //                 .RDWEN    ( we_n  ), // input
+    //                 .AW       ( n_aw  ), // input [3:0]
+    //                 .AC       ( n_ac  ), // input
+    //                 .D        ( wdata ), // input [127:0]
+    //                 .BW       ( '1    ), // input [127:0]
+    //                 .T_LOGIC  ( 1'b0  ), // input
+    //                 .MA_SAWL  ( '0    ), // input
+    //                 .MA_WL    ( '0    ), // input
+    //                 .MA_WRAS  ( '0    ), // input
+    //                 .MA_WRASD ( '0    ), // input
+    //                 .Q        ( rdata ), // output [127:0]
+    //                 .OBSV_CTL (       )  // output
+    //             );
 
-            6: begin
-                logic          n_as;
-                logic [2:0]    n_aw;
-                logic [1:0]    n_ac;
-                logic [127:0]   bw;
-                assign {n_aw[2], n_as, n_aw[1:0], n_ac} = addr;
-                assign bw = (we_n) ?  '0 : '1;
+    //             // TSMC55
+    //             // SRAM_SP_32w_128b sram_data
+    //             // (
+    //             //     .CS_N    ( cs_n  ),
+    //             //     .CLK     ( clk   ),
+    //             //     .WR_N    ( we_n  ),
+    //             //     .RW_ADDR ( addr  ),
+    //             //     .RST_N   ( rst_n ),
+    //             //     .DATA_IN ( wdata ),
+    //             //     .DATA_OUT( rdata )
+    //             // );
+    //         end
 
-                SP1D_64w_128b sram_data
-                (
-                    .CLK         ( clk           ),
-                    .CEN         ( cs_n          ),
-                    .RDWEN       ( we_n          ),
-                    .DEEPSLEEP   ( 1'b0          ),
-                    .POWERGATE   ( 1'b0          ),
-                    .AS          ( n_as          ),
-                    .AW          ( n_aw          ),
-                    .AC          ( n_ac          ),
-                    .D           ( wdata         ),
-                    .BW          ( bw            ),
-                    .T_BIST      ( 1'b0          ),
-                    .T_LOGIC     ( 1'b0          ),
-                    .T_CEN       ( 1'b0          ),
-                    .T_RDWEN     ( 1'b0          ),
-                    .T_DEEPSLEEP ( 1'b0          ),
-                    .T_POWERGATE ( 1'b0          ),
-                    .T_STAB      ( '0            ),
-                    .T_WBT       ( '0            ),
-                    .T_AS        ( '0            ),
-                    .T_AW        ( '0            ),
-                    .T_AC        ( '0            ),
-                    .T_D         ( '0            ),
-                    .T_BW        ( '0            ),
-                    .MA_SAWL     ( '0            ),
-                    .MA_WL       ( '0            ),
-                    .MA_WRAS     ( '0            ),
-                    .MA_WRASD    ( '0            ),
-                    .Q           ( rdata         ),
-                    .OBSV_CTL    (               )
-                );
-            end
-            default : /* default */;
-        endcase
+    //         6: begin
+    //             logic          n_as;
+    //             logic [2:0]    n_aw;
+    //             logic [1:0]    n_ac;
+    //             logic [127:0]   bw;
+    //             assign {n_aw[2], n_as, n_aw[1:0], n_ac} = addr;
+    //             assign bw = (we_n) ?  '0 : '1;
 
-      end
+    //             SP1D_64w_128b sram_data
+    //             (
+    //                 .CLK         ( clk           ),
+    //                 .CEN         ( cs_n          ),
+    //                 .RDWEN       ( we_n          ),
+    //                 .DEEPSLEEP   ( 1'b0          ),
+    //                 .POWERGATE   ( 1'b0          ),
+    //                 .AS          ( n_as          ),
+    //                 .AW          ( n_aw          ),
+    //                 .AC          ( n_ac          ),
+    //                 .D           ( wdata         ),
+    //                 .BW          ( bw            ),
+    //                 .T_BIST      ( 1'b0          ),
+    //                 .T_LOGIC     ( 1'b0          ),
+    //                 .T_CEN       ( 1'b0          ),
+    //                 .T_RDWEN     ( 1'b0          ),
+    //                 .T_DEEPSLEEP ( 1'b0          ),
+    //                 .T_POWERGATE ( 1'b0          ),
+    //                 .T_STAB      ( '0            ),
+    //                 .T_WBT       ( '0            ),
+    //                 .T_AS        ( '0            ),
+    //                 .T_AW        ( '0            ),
+    //                 .T_AC        ( '0            ),
+    //                 .T_D         ( '0            ),
+    //                 .T_BW        ( '0            ),
+    //                 .MA_SAWL     ( '0            ),
+    //                 .MA_WL       ( '0            ),
+    //                 .MA_WRAS     ( '0            ),
+    //                 .MA_WRASD    ( '0            ),
+    //                 .Q           ( rdata         ),
+    //                 .OBSV_CTL    (               )
+    //             );
+    //         end
+    //         default : /* default */;
+    //     endcase
 
-    endgenerate
+    //   end
+
+    // endgenerate
 `else
 
  `ifdef PULP_FPGA_EMUL
